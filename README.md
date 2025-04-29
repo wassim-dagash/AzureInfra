@@ -12,7 +12,6 @@ This repository contains Terraform code to provision a foundational Azure enviro
 - Virtual Machines in Spokes for validation
 - **Azure PaaS Databases** (e.g., Azure SQL, PostgreSQL)
 
-The architecture follows Azure best practices for network segmentation, centralized security, and scalable cloud networking.
 
 ## 🏗️ Architecture
 
