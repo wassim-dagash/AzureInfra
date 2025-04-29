@@ -17,10 +17,6 @@ This repository contains Terraform code to provision a foundational Azure enviro
 
 ### High-Level Diagram
 
-![Azure Hub and Spoke with Firewall and PaaS](https://raw.githubusercontent.com/wassim-dagash/AzureInfra/main/docs/azure_infra_diagram.png)
-
-*(If the diagram does not exist yet, see "Diagram Generation" instructions below.)*
-
 **Components:**
 - **Hub VNet**:
   - Azure Firewall
