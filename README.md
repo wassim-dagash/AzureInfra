@@ -15,8 +15,6 @@ This repository contains Terraform code to provision a foundational Azure enviro
 
 ## 🏗️ Architecture
 
-### High-Level Diagram
-
 **Components:**
 - **Hub VNet**:
   - Azure Firewall
@@ -116,8 +114,6 @@ For questions or issues, open an [Issue](https://github.com/wassim-dagash/AzureI
 ---
 
 ## 📊 Diagram Generation
-
-If `docs/azure_infra_diagram.png` does not exist yet, you can use the following simple structure:
 
 ```plaintext
                     +----------------------+
