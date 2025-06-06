@@ -10,7 +10,7 @@ resource "azurerm_resource_group" "spoke1-vnet-rg" {
 }
 
 resource "azurerm_virtual_network" "spoke1-vnet" {
-  name                = "spoke1-vnet"
+  name                = "spoke1-vnet-${random_string.suffix.result}"
   location            = azurerm_resource_group.spoke1-vnet-rg.location
   resource_group_name = azurerm_resource_group.spoke1-vnet-rg.name
   address_space       = ["10.1.0.0/16"]
@@ -35,7 +35,7 @@ resource "azurerm_subnet" "spoke1-workload" {
 }
 
 resource "azurerm_virtual_network_peering" "spoke1-hub-peer" {
-  name                      = "spoke1-hub-peer"
+  name                      = "spoke1-hub-peer-${random_string.suffix.result}"
   resource_group_name       = azurerm_resource_group.spoke1-vnet-rg.name
   virtual_network_name      = azurerm_virtual_network.spoke1-vnet.name
   remote_virtual_network_id = azurerm_virtual_network.hub-vnet.id
@@ -44,11 +44,16 @@ resource "azurerm_virtual_network_peering" "spoke1-hub-peer" {
   allow_forwarded_traffic      = true
   allow_gateway_transit        = false
   use_remote_gateways          = true
-  depends_on                   = [azurerm_virtual_network.spoke1-vnet, azurerm_virtual_network.hub-vnet, azurerm_virtual_network_gateway.hub-vnet-gateway]
+
+  depends_on = [
+    azurerm_virtual_network.spoke1-vnet,
+    azurerm_virtual_network.hub-vnet,
+    azurerm_virtual_network_gateway.hub-vnet-gateway
+  ]
 }
 
 resource "azurerm_network_interface" "spoke1-nic" {
-  name                 = "${local.prefix-spoke1}-nic"
+  name                 = "spoke1-nic-${random_string.suffix.result}"
   location             = azurerm_resource_group.spoke1-vnet-rg.location
   resource_group_name  = azurerm_resource_group.spoke1-vnet-rg.name
   enable_ip_forwarding = true
@@ -61,7 +66,7 @@ resource "azurerm_network_interface" "spoke1-nic" {
 }
 
 resource "azurerm_virtual_machine" "spoke1-vm" {
-  name                  = "${local.prefix-spoke1}-vm"
+  name                  = "spoke1-vm-${random_string.suffix.result}"
   location              = azurerm_resource_group.spoke1-vnet-rg.location
   resource_group_name   = azurerm_resource_group.spoke1-vnet-rg.name
   network_interface_ids = [azurerm_network_interface.spoke1-nic.id]
@@ -76,14 +81,14 @@ resource "azurerm_virtual_machine" "spoke1-vm" {
 
 
   storage_os_disk {
-    name              = "myosdisk1"
+    name              = "${local.prefix-spoke1}-osdisk"    
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
   }
 
   os_profile {
-    computer_name  = "${local.prefix-spoke1}-vm"
+    computer_name  = "spoke1-vm-${random_string.suffix.result}"
     admin_username = var.username
     admin_password = local.password
   }
@@ -100,7 +105,7 @@ resource "azurerm_virtual_machine" "spoke1-vm" {
 }
 
 resource "azurerm_virtual_network_peering" "hub-spoke1-peer" {
-  name                         = "hub-spoke1-peer"
+  name                         = "hub-spoke1-peer-${random_string.suffix.result}"
   resource_group_name          = azurerm_resource_group.hub-vnet-rg.name
   virtual_network_name         = azurerm_virtual_network.hub-vnet.name
   remote_virtual_network_id    = azurerm_virtual_network.spoke1-vnet.id
@@ -108,11 +113,16 @@ resource "azurerm_virtual_network_peering" "hub-spoke1-peer" {
   allow_forwarded_traffic      = true
   allow_gateway_transit        = true
   use_remote_gateways          = false
-  depends_on                   = [azurerm_virtual_network.spoke1-vnet, azurerm_virtual_network.hub-vnet, azurerm_virtual_network_gateway.hub-vnet-gateway]
+
+  depends_on = [
+    azurerm_virtual_network.spoke1-vnet,
+    azurerm_virtual_network.hub-vnet,
+    azurerm_virtual_network_gateway.hub-vnet-gateway
+  ]
 }
 
 resource "azurerm_route_table" "spoke1-fw-rt" {
-  name                = "spoke1-fw-rt"
+  name                = "spoke1-fw-rt-${random_string.suffix.result}"
   location            = local.spoke1-location
   resource_group_name = azurerm_resource_group.spoke1-vnet-rg.name
 }
@@ -147,7 +157,7 @@ resource "azurerm_subnet_route_table_association" "spoke1-workload-rt-assoc" {
 
 # SQL Server
 resource "azurerm_mssql_server" "spoke1-sql-server" {
-  name                         = "${local.prefix-spoke1}-sqlserver"
+  name                         = "spoke1-sqlserver-${random_string.suffix.result}"
   resource_group_name          = azurerm_resource_group.spoke1-vnet-rg.name
   location                     = local.spoke1-location
   version                      = "12.0"
@@ -163,7 +173,7 @@ resource "azurerm_mssql_server" "spoke1-sql-server" {
 
 # SQL Database
 resource "azurerm_mssql_database" "spoke1-sqldb" {
-  name           = "${local.prefix-spoke1}-sqldb"
+  name           = "spoke1-sqldb-${random_string.suffix.result}"
   server_id      = azurerm_mssql_server.spoke1-sql-server.id
   sku_name       = "Basic"
   max_size_gb    = 2
@@ -184,7 +194,7 @@ resource "azurerm_private_dns_zone" "sql-dns-spoke1" {
 
 # Link DNS Zone to Spoke1 VNet
 resource "azurerm_private_dns_zone_virtual_network_link" "sql-dns-link-spoke1" {
-  name                  = "${local.prefix-spoke1}-sql-dns-link"
+  name                  = "spoke1-sql-dns-link-${random_string.suffix.result}"
   resource_group_name   = azurerm_resource_group.spoke1-vnet-rg.name
   private_dns_zone_name = azurerm_private_dns_zone.sql-dns-spoke1.name
   virtual_network_id    = azurerm_virtual_network.spoke1-vnet.id
@@ -192,13 +202,13 @@ resource "azurerm_private_dns_zone_virtual_network_link" "sql-dns-link-spoke1" {
 
 # Private Endpoint in Spoke1
 resource "azurerm_private_endpoint" "sql-private-endpoint-spoke1" {
-  name                = "${local.prefix-spoke1}-sql-pe"
+  name                = "spoke1-sql-pe-${random_string.suffix.result}"
   location            = local.spoke1-location
   resource_group_name = azurerm_resource_group.spoke1-vnet-rg.name
   subnet_id           = azurerm_subnet.spoke1-mgmt.id
 
   private_service_connection {
-    name                           = "${local.prefix-spoke1}-sql-priv-conn"
+    name                           = "spoke1-sql-priv-conn-${random_string.suffix.result}"
     private_connection_resource_id = azurerm_mssql_server.spoke1-sql-server.id
     subresource_names              = ["sqlServer"]
     is_manual_connection           = false
@@ -206,7 +216,7 @@ resource "azurerm_private_endpoint" "sql-private-endpoint-spoke1" {
 
   private_dns_zone_group {
     name                 = "sql-dns-zone-group"
-    private_dns_zone_ids = [azurerm_private_dns_zone.sql-dns.id]
+    private_dns_zone_ids = [azurerm_private_dns_zone.sql-dns-spoke1.id]
   }
 
   tags = {

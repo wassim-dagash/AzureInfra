@@ -79,7 +79,7 @@ resource "azurerm_virtual_machine" "spoke2-vm" {
   }
 
   storage_os_disk {
-    name              = "myosdisk1"
+    name =              "${local.prefix-spoke1}-osdisk"  
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
@@ -184,7 +184,7 @@ resource "azurerm_subnet_network_security_group_association" "spoke2-workload-ns
 
 # SQL Server
 resource "azurerm_mssql_server" "spoke2-sql-server" {
-  name                         = "${local.prefix-spoke2}-sqlserver"
+  name                         = "${local.prefix-spoke2}-sqlserver-${random_string.suffix.result}"
   resource_group_name          = azurerm_resource_group.spoke2-vnet-rg.name
   location                     = local.spoke2-location
   version                      = "12.0"
@@ -200,7 +200,7 @@ resource "azurerm_mssql_server" "spoke2-sql-server" {
 
 # SQL Database
 resource "azurerm_mssql_database" "spoke2-sqldb" {
-  name           = "${local.prefix-spoke2}-sqldb"
+  name           = "${local.prefix-spoke2}-sqldb-${random_string.suffix.result}"
   server_id      = azurerm_mssql_server.spoke2-sql-server.id
   sku_name       = "Basic"
   max_size_gb    = 2
